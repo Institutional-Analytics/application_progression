@@ -76,9 +76,8 @@
 
   <div class="note">
     <b>Reading this dashboard:</b> Fall 26-27 tracking began <b>5 weeks earlier</b> (mid-June) than last year (late-July),
-    so the two calendar windows barely overlap yet. This year is still in the <b>early application phase</b> —
-    entrance exams and registration have not opened, so registration figures are expected to be near zero for now.
-    The comparison below is plotted on a shared June→October calendar so you can see relative pace honestly.
+    so the two calendar windows barely overlap yet. The comparison below is plotted on a shared June→October
+    calendar, with both years aligned to June 1, so you can compare relative pace at the same point in the cycle.
   </div>
 
   <!-- KPIs -->
@@ -116,7 +115,7 @@
 
     <div class="card full">
       <h3>Cumulative registrations over the season</h3>
-      <p class="cap">Students fully registered. Last year ramped through the summer; this year registration has not opened yet.</p>
+      <p class="cap">Students fully registered to date, by calendar position (both years aligned to June 1).</p>
       <div class="chartbox h-tall"><canvas id="cReg"></canvas></div>
     </div>
 
@@ -128,7 +127,7 @@
 
     <div class="card">
       <h3>Registration conversion — last year</h3>
-      <p class="cap">By season's end last year, how applicants converted. This year is still pre-registration.</p>
+      <p class="cap">By season's end last year, how applicants converted to registered students.</p>
       <div class="chartbox h-mid"><canvas id="cConv"></canvas></div>
     </div>
 
@@ -198,8 +197,8 @@ document.getElementById('k_app_sub').innerHTML =
 // head start in weeks between first count dates (month/day, year-agnostic)
 const hs = Math.round((offset(m.first_date_2526)-offset(m.first_date_2627))/7);
 document.getElementById('k_head').textContent = `${hs} wks`;
-document.getElementById('k_reg').textContent = '0';
-document.getElementById('k_reg_sub').innerHTML = `<span class="flat">registration not yet open</span>`;
+document.getElementById('k_reg').textContent = fmt(DATA.s2627[DATA.s2627.length-1].reg);
+document.getElementById('k_reg_sub').innerHTML = `as of ${shortDate(m.last_date_2627)}`;
 document.getElementById('k_last').textContent = fmt(m.final_overall_2526);
 document.getElementById('k_last_sub').textContent =
   `applicants · ${fmt(m.peak_reg_2526)} registered (${Math.round(m.peak_reg_2526/m.final_overall_2526*100)}%)`;
