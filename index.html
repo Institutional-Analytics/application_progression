@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LIU Admissions — Fall 26-27 vs Fall 25-26</title>
+<title>LIU Admissions Dashboard — Year-over-Year &amp; IT Report</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
@@ -55,6 +55,36 @@
     font-size:12.5px;color:var(--muted)}
   footer code{background:#eef1f7;padding:1px 6px;border-radius:5px;font-size:12px}
   details{margin-top:10px}summary{cursor:pointer;font-weight:600;color:var(--navy)}
+
+  /* ---- tabs ---- */
+  .tabs{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;
+    box-shadow:0 1px 5px rgba(20,40,80,.05)}
+  .tabs .wrap{display:flex;gap:4px;padding-top:0;padding-bottom:0;overflow-x:auto}
+  .tabbtn{appearance:none;background:none;border:none;cursor:pointer;font:inherit;font-weight:700;
+    color:var(--muted);padding:14px 18px;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+  .tabbtn:hover{color:var(--navy)}
+  .tabbtn.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tabpanel{display:none}
+  .tabpanel.active{display:block}
+  /* ---- detail table + controls ---- */
+  .ctrls{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 14px;align-items:center}
+  .ctrls .fld{display:flex;flex-direction:column;gap:4px}
+  .ctrls label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .ctrls select{font:inherit;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);min-width:150px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;align-self:flex-end}
+  .seg button{appearance:none;border:none;background:#fff;font:inherit;font-weight:600;padding:8px 13px;cursor:pointer;color:var(--muted)}
+  .seg button.active{background:var(--navy);color:#fff}
+  .dtable{width:100%;border-collapse:collapse;font-size:13.5px}
+  .dtable th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;
+    padding:8px 12px;border-bottom:2px solid var(--line)}
+  .dtable td{padding:9px 12px;border-bottom:1px solid var(--line)}
+  .dtable td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--navy)}
+  .dtable td.lab{color:var(--ink)}
+  .dtable tbody tr:hover{background:#f8fafd}
+  .dtable tr.sub td.lab{padding-left:26px;color:var(--muted);font-weight:500}
+  .dtable tr.tot td{border-top:2px solid var(--line);font-weight:800;background:#f4f7fc}
+  .pill{display:inline-block;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .pill.up{background:#e3f6ee;color:#138a5a}.pill.dn{background:#fdeaea;color:#c0392b}
 </style>
 </head>
 <body>
@@ -67,12 +97,19 @@
     <p class="sub">Daily applications &amp; registration progress, year over year</p>
     <div class="asof">
       <span>This year (26-27) as of <b id="asof27">—</b></span>
-      <span>Last year (25-26) full season through <b id="asof26">—</b></span>
+      <span>Last year (25-26) full semester through <b id="asof26">—</b></span>
     </div>
   </div>
 </header>
 
-<div class="wrap">
+<nav class="tabs">
+  <div class="wrap">
+    <button class="tabbtn active" data-tab="tab-yoy">Beirut — Year over Year</button>
+    <button class="tabbtn" data-tab="tab-it">IT Report — All Campuses</button>
+  </div>
+</nav>
+
+<div class="wrap tabpanel active" id="tab-yoy">
 
   <div class="note">
     <b>Reading this dashboard:</b> Fall 26-27 tracking began <b>5 weeks earlier</b> (mid-June) than last year (late-July),
@@ -98,7 +135,7 @@
       <div class="cmp" id="k_reg_sub">—</div>
     </div>
     <div class="kpi">
-      <div class="lab">Last year — full season</div>
+      <div class="lab">Last year — full semester</div>
       <div class="val" id="k_last">—</div>
       <div class="cmp" id="k_last_sub">—</div>
     </div>
@@ -108,13 +145,13 @@
   <section class="grid cards">
 
     <div class="card full">
-      <h3>Cumulative applicants over the season</h3>
+      <h3>Cumulative applicants over the semester</h3>
       <p class="cap">Total applications received to date, plotted by calendar position (both years aligned to June 1).</p>
       <div class="chartbox h-tall"><canvas id="cApp"></canvas></div>
     </div>
 
     <div class="card full">
-      <h3>Cumulative registrations over the season</h3>
+      <h3>Cumulative registrations over the semester</h3>
       <p class="cap">Students fully registered to date, by calendar position (both years aligned to June 1).</p>
       <div class="chartbox h-tall"><canvas id="cReg"></canvas></div>
     </div>
@@ -127,7 +164,7 @@
 
     <div class="card">
       <h3>Registration conversion — last year</h3>
-      <p class="cap">By season's end last year, how applicants converted to registered students.</p>
+      <p class="cap">By semester's end last year, how applicants converted to registered students.</p>
       <div class="chartbox h-mid"><canvas id="cConv"></canvas></div>
     </div>
 
@@ -155,6 +192,118 @@
         • This year's applicant total (228) = 159 on-campus + 69 online. Last year did not separate an online channel.<br>
         • Several dates in last year's file were stored ambiguously (e.g. 1/8 read as Jan-8); these were corrected back to day/month and validated against the weekday column.<br>
         • <b>To refresh:</b> re-run the extraction step against the updated Excel files to regenerate the embedded data block, then re-push to GitHub.
+      </p>
+    </details>
+  </footer>
+
+</div>
+
+<div class="wrap tabpanel" id="tab-it">
+
+  <div class="note">
+    <b>Focus semester: Fall 2026-2027</b> &mdash; the cycle now opening. Every metric below tracks where we stand today,
+    benchmarked first against <b>last year (Fall 2025-2026)</b> and then against earlier semesters for longer-run context.
+    Comparisons use the <b>same point in the calendar</b> (&ldquo;to date&rdquo;, late June each year) so the pace read is fair,
+    plus where prior semesters finally <b>landed</b> (&ldquo;full semester&rdquo;) to project where this one is heading.
+    Snapshot: <b id="it_asof">&mdash;</b>.
+  </div>
+
+  <section class="grid kpis">
+    <div class="kpi">
+      <div class="lab">Fall 2026-27 applicants to date</div>
+      <div class="val" id="it_app">&mdash;</div>
+      <div class="cmp" id="it_app_sub">&mdash;</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Fall 2026-27 registered to date</div>
+      <div class="val" id="it_reg">&mdash;</div>
+      <div class="cmp" id="it_reg_sub">&mdash;</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Campuses reporting</div>
+      <div class="val gold" id="it_camp">&mdash;</div>
+      <div class="cmp">with applicants on file</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Benchmark &mdash; last year full semester</div>
+      <div class="val" id="it_last">&mdash;</div>
+      <div class="cmp" id="it_last_sub">&mdash;</div>
+    </div>
+  </section>
+
+  <section class="grid cards">
+
+    <div class="card full">
+      <h3>Applicants by campus &mdash; this year vs same date last year</h3>
+      <p class="cap">Fall 26-27 to date against the matching late-June snapshot of Fall 25-26.</p>
+      <div class="chartbox h-major"><canvas id="itCampus"></canvas></div>
+    </div>
+
+    <div class="card full">
+      <h3>Where Fall 2026-27 sits vs prior semesters at this date</h3>
+      <p class="cap">All-campuses applicants recorded at the same late-June calendar date in each cycle. Fall 26-27 (gold) is the focus semester; earlier cycles give the historical range.</p>
+      <div class="chartbox h-mid"><canvas id="itPace"></canvas></div>
+    </div>
+
+    <div class="card full">
+      <h3>Where prior semesters landed &mdash; full-semester applicants, registrations &amp; conversion</h3>
+      <p class="cap">All-campuses end-of-cycle totals for completed semesters &mdash; the trajectory Fall 26-27 will be measured against. Bars = volume (left axis); line = % of applicants who became registered students (right axis).</p>
+      <div class="chartbox h-tall"><canvas id="itFunnel"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Conversion by campus &mdash; last completed semester</h3>
+      <p class="cap">Fall 25-26 &mdash; % of applicants who registered, per campus.</p>
+      <div class="chartbox h-major"><canvas id="itConv"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Applicant outcomes &mdash; Fall 25-26</h3>
+      <p class="cap">How the all-campuses applicant pool resolved by semester's end.</p>
+      <div class="chartbox h-major"><canvas id="itOutcome"></canvas></div>
+    </div>
+
+    <div class="card full">
+      <h3>Registered-student composition &mdash; Fall 25-26</h3>
+      <p class="cap">Total registered students broken into new regular, new transfer, and continuing students (all campuses).</p>
+      <div class="chartbox h-mid"><canvas id="itMix"></canvas></div>
+    </div>
+
+    <div class="card full">
+      <h3>Detailed metrics</h3>
+      <p class="cap">Every metric in the source file, by campus and cycle. Switch between the full-semester view and the same-calendar-date view.</p>
+      <div class="ctrls">
+        <div class="fld">
+          <label for="selCampus">Campus</label>
+          <select id="selCampus"></select>
+        </div>
+        <div class="fld">
+          <label for="selYear">Cycle</label>
+          <select id="selYear"></select>
+        </div>
+        <div class="seg" id="segMode">
+          <button data-mode="tt" class="active">Full semester</button>
+          <button data-mode="td">To date</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dtable"><tbody id="itTableBody"></tbody></table>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    <details>
+      <summary>Notes &amp; definitions</summary>
+      <p style="margin:8px 0 0">
+        &bull; <b>To date</b> = the snapshot at the same calendar date (late June) in each year &mdash; the fair pace comparison.
+        <b>Full semester</b> = the latest cumulative total for each cycle (final numbers for completed years).<br>
+        &bull; <b>Applicants</b> resolve into <b>Registered</b> (new) + <b>Unregistered</b> + <b>Drop All</b> + <b>Still Applicant</b>.<br>
+        &bull; <b>Total Registered</b> = new Regular + new Transfer + continuing students.<br>
+        &bull; <b>% Applicant&rarr;Student</b> = applicants who progressed beyond &ldquo;still applicant&rdquo;.
+        <b>% Registered&rarr;Applicant</b> = new registered &divide; applicants.<br>
+        &bull; <b>To refresh:</b> re-run the extraction against the new daily file to regenerate the embedded <code>IT_DATA</code> block.
       </p>
     </details>
   </footer>
@@ -308,6 +457,201 @@ new Chart(document.getElementById('cSchool'),{
     plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.x)} applicants`}}}}
 });
+</script>
+
+<script>
+/* ===== IT Report — All-Campuses comparison ===== */
+const IT_DATA = {"campuses":{"Beirut":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":232,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":232,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":232,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":232,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.68534482758621,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":2267,"reg":1749,"regular":1617,"transfer":132,"cont":255,"totreg":2004,"unreg":155,"dropall":62,"stillapp":301,"pct_app2stu":86.72,"pct_reg2app":77.15},"td":{"app":73,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":7,"dropall":5,"stillapp":61,"pct_app2stu":16.44,"pct_reg2app":0.0,"regafter":57,"totreg2":57,"appdiff":0.13698630136986,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":2759,"reg":1816,"regular":1721,"transfer":95,"cont":268,"totreg":2084,"unreg":279,"dropall":171,"stillapp":493,"pct_app2stu":82.13,"pct_reg2app":65.82},"td":{"app":63,"reg":0,"regular":0,"transfer":0,"cont":3,"totreg":3,"unreg":4,"dropall":4,"stillapp":55,"pct_app2stu":12.7,"pct_reg2app":0.0,"regafter":43,"totreg2":43,"appdiff":-4.2063492063492,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":3451,"reg":2383,"regular":2201,"transfer":182,"cont":251,"totreg":2634,"unreg":257,"dropall":66,"stillapp":745,"pct_app2stu":78.41,"pct_reg2app":69.05},"td":{"app":328,"reg":34,"regular":33,"transfer":1,"cont":4,"totreg":38,"unreg":30,"dropall":11,"stillapp":253,"pct_app2stu":22.87,"pct_reg2app":10.37,"regafter":154,"totreg2":188,"appdiff":-0.8140243902439,"regdiff":0.97058823529412},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":4654,"reg":3070,"regular":2865,"transfer":205,"cont":305,"totreg":3375,"unreg":449,"dropall":159,"stillapp":976,"pct_app2stu":79.03,"pct_reg2app":65.96},"td":{"app":595,"reg":1,"regular":1,"transfer":0,"cont":4,"totreg":5,"unreg":56,"dropall":17,"stillapp":521,"pct_app2stu":12.44,"pct_reg2app":0.17,"regafter":336,"totreg2":337,"appdiff":0.51428571428571,"regdiff":-7},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":4802,"reg":3562,"regular":3319,"transfer":243,"cont":547,"totreg":4109,"unreg":360,"dropall":107,"stillapp":773,"pct_app2stu":83.9,"pct_reg2app":74.18},"td":{"app":289,"reg":8,"regular":8,"transfer":0,"cont":4,"totreg":12,"unreg":36,"dropall":8,"stillapp":237,"pct_app2stu":17.99,"pct_reg2app":2.77,"regafter":165,"totreg2":173,"appdiff":-1.0415224913495,"regdiff":-12.625},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":4004,"reg":3067,"regular":2886,"transfer":181,"cont":430,"totreg":3497,"unreg":190,"dropall":108,"stillapp":639,"pct_app2stu":84.04,"pct_reg2app":76.6},"td":{"app":590,"reg":109,"regular":109,"transfer":0,"cont":0,"totreg":109,"unreg":17,"dropall":18,"stillapp":446,"pct_app2stu":24.41,"pct_reg2app":18.47,"regafter":364,"totreg2":473,"appdiff":0.63898305084746,"regdiff":0.98165137614679},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":4300,"reg":2967,"regular":2680,"transfer":287,"cont":353,"totreg":3320,"unreg":152,"dropall":88,"stillapp":1093,"pct_app2stu":74.58,"pct_reg2app":69.0},"td":{"app":213,"reg":2,"regular":2,"transfer":0,"cont":0,"totreg":2,"unreg":10,"dropall":2,"stillapp":199,"pct_app2stu":6.57,"pct_reg2app":0.94,"regafter":65,"totreg2":67,"appdiff":0.14084507042254,"regdiff":-0.5},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":3996,"reg":3004,"regular":2720,"transfer":284,"cont":381,"totreg":3385,"unreg":223,"dropall":93,"stillapp":676,"pct_app2stu":83.08,"pct_reg2app":75.18},"td":{"app":183,"reg":3,"regular":1,"transfer":2,"cont":0,"totreg":3,"unreg":9,"dropall":2,"stillapp":169,"pct_app2stu":7.65,"pct_reg2app":1.64,"regafter":124,"totreg2":127,"appdiff":0.38251366120219,"regdiff":0.33333333333333},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":3646,"reg":2822,"regular":2578,"transfer":244,"cont":305,"totreg":3127,"unreg":356,"dropall":73,"stillapp":395,"pct_app2stu":89.17,"pct_reg2app":77.4},"td":{"app":113,"reg":2,"regular":2,"transfer":0,"cont":0,"totreg":2,"unreg":4,"dropall":1,"stillapp":106,"pct_app2stu":6.19,"pct_reg2app":1.77,"regafter":70,"totreg2":72,"appdiff":0.89380530973451,"regdiff":1},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":3391,"reg":2617,"regular":2349,"transfer":268,"cont":335,"totreg":2952,"unreg":340,"dropall":70,"stillapp":364,"pct_app2stu":89.27,"pct_reg2app":77.17},"td":{"app":12,"reg":0,"regular":0,"transfer":0,"cont":3,"totreg":3,"unreg":0,"dropall":1,"stillapp":11,"pct_app2stu":8.33,"pct_reg2app":0.0,"regafter":6,"totreg2":6,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Bekaa":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":18,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":18,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":18,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":18,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.83333333333333,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":897,"reg":824,"regular":803,"transfer":21,"cont":177,"totreg":1001,"unreg":15,"dropall":5,"stillapp":53,"pct_app2stu":94.09,"pct_reg2app":91.86},"td":{"app":3,"reg":1,"regular":1,"transfer":0,"cont":0,"totreg":1,"unreg":0,"dropall":0,"stillapp":2,"pct_app2stu":33.33,"pct_reg2app":33.33,"regafter":0,"totreg2":1,"appdiff":-0.66666666666667,"regdiff":1},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":921,"reg":770,"regular":743,"transfer":27,"cont":214,"totreg":984,"unreg":28,"dropall":44,"stillapp":79,"pct_app2stu":91.42,"pct_reg2app":83.6},"td":{"app":5,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":4,"pct_app2stu":20.0,"pct_reg2app":0.0,"regafter":3,"totreg2":3,"appdiff":-5.6,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":1231,"reg":1006,"regular":976,"transfer":30,"cont":177,"totreg":1183,"unreg":51,"dropall":17,"stillapp":157,"pct_app2stu":87.25,"pct_reg2app":81.72},"td":{"app":33,"reg":2,"regular":2,"transfer":0,"cont":1,"totreg":3,"unreg":0,"dropall":1,"stillapp":30,"pct_app2stu":9.09,"pct_reg2app":6.06,"regafter":4,"totreg2":6,"appdiff":-0.03030303030303,"regdiff":1},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":1595,"reg":1254,"regular":1210,"transfer":44,"cont":202,"totreg":1456,"unreg":62,"dropall":22,"stillapp":257,"pct_app2stu":83.89,"pct_reg2app":78.62},"td":{"app":34,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":1,"dropall":1,"stillapp":32,"pct_app2stu":5.88,"pct_reg2app":0.0,"regafter":3,"totreg2":3,"appdiff":0.58823529411765,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":1821,"reg":1482,"regular":1410,"transfer":72,"cont":369,"totreg":1851,"unreg":41,"dropall":25,"stillapp":273,"pct_app2stu":85.01,"pct_reg2app":81.38},"td":{"app":14,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":1,"dropall":0,"stillapp":13,"pct_app2stu":7.14,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-3.8571428571429,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":1455,"reg":1223,"regular":1184,"transfer":39,"cont":383,"totreg":1606,"unreg":37,"dropall":22,"stillapp":173,"pct_app2stu":88.11,"pct_reg2app":84.05},"td":{"app":68,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":3,"dropall":1,"stillapp":64,"pct_app2stu":5.88,"pct_reg2app":0.0,"regafter":43,"totreg2":43,"appdiff":0.79411764705882,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":1071,"reg":931,"regular":877,"transfer":54,"cont":227,"totreg":1158,"unreg":13,"dropall":17,"stillapp":110,"pct_app2stu":89.73,"pct_reg2app":86.93},"td":{"app":14,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":14,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.14285714285714,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":1047,"reg":932,"regular":887,"transfer":45,"cont":211,"totreg":1143,"unreg":24,"dropall":16,"stillapp":75,"pct_app2stu":92.84,"pct_reg2app":89.02},"td":{"app":12,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":12,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":2,"totreg2":2,"appdiff":1,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":969,"reg":903,"regular":852,"transfer":51,"cont":212,"totreg":1115,"unreg":20,"dropall":17,"stillapp":29,"pct_app2stu":97.01,"pct_reg2app":93.19},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":1277,"reg":1202,"regular":1163,"transfer":39,"cont":190,"totreg":1392,"unreg":51,"dropall":22,"stillapp":2,"pct_app2stu":99.84,"pct_reg2app":94.13},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Saida":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":34,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":34,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":34,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":34,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.76470588235294,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":960,"reg":757,"regular":723,"transfer":34,"cont":93,"totreg":850,"unreg":34,"dropall":25,"stillapp":144,"pct_app2stu":85.0,"pct_reg2app":78.85},"td":{"app":8,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":8,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":3,"totreg2":3,"appdiff":-0.125,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":1009,"reg":764,"regular":723,"transfer":41,"cont":72,"totreg":836,"unreg":42,"dropall":94,"stillapp":109,"pct_app2stu":89.2,"pct_reg2app":75.72},"td":{"app":9,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":1,"stillapp":8,"pct_app2stu":11.11,"pct_reg2app":0.0,"regafter":5,"totreg2":5,"appdiff":-4.2222222222222,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":1166,"reg":885,"regular":844,"transfer":41,"cont":83,"totreg":968,"unreg":29,"dropall":30,"stillapp":222,"pct_app2stu":80.96,"pct_reg2app":75.9},"td":{"app":47,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":47,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":18,"totreg2":18,"appdiff":-0.82978723404255,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":1639,"reg":1106,"regular":1059,"transfer":47,"cont":112,"totreg":1218,"unreg":76,"dropall":67,"stillapp":390,"pct_app2stu":76.21,"pct_reg2app":67.48},"td":{"app":86,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":0,"dropall":2,"stillapp":84,"pct_app2stu":2.33,"pct_reg2app":0.0,"regafter":33,"totreg2":33,"appdiff":0.36046511627907,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":2091,"reg":1362,"regular":1303,"transfer":59,"cont":209,"totreg":1571,"unreg":73,"dropall":47,"stillapp":609,"pct_app2stu":70.88,"pct_reg2app":65.14},"td":{"app":55,"reg":0,"regular":0,"transfer":0,"cont":1,"totreg":1,"unreg":0,"dropall":3,"stillapp":52,"pct_app2stu":5.45,"pct_reg2app":0.0,"regafter":26,"totreg2":26,"appdiff":-5.9636363636364,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":1531,"reg":1165,"regular":1120,"transfer":45,"cont":200,"totreg":1365,"unreg":26,"dropall":94,"stillapp":246,"pct_app2stu":83.93,"pct_reg2app":76.09},"td":{"app":383,"reg":264,"regular":264,"transfer":0,"cont":0,"totreg":264,"unreg":1,"dropall":31,"stillapp":87,"pct_app2stu":77.28,"pct_reg2app":68.93,"regafter":30,"totreg2":294,"appdiff":0.93733681462141,"regdiff":1},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":1289,"reg":964,"regular":885,"transfer":79,"cont":136,"totreg":1100,"unreg":52,"dropall":64,"stillapp":209,"pct_app2stu":83.79,"pct_reg2app":74.79},"td":{"app":24,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":23,"pct_app2stu":4.17,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-3.4583333333333,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":1376,"reg":911,"regular":860,"transfer":51,"cont":156,"totreg":1067,"unreg":53,"dropall":91,"stillapp":321,"pct_app2stu":76.67,"pct_reg2app":66.21},"td":{"app":107,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":1,"dropall":0,"stillapp":106,"pct_app2stu":0.93,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.98130841121495,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":1067,"reg":952,"regular":907,"transfer":45,"cont":170,"totreg":1122,"unreg":49,"dropall":60,"stillapp":6,"pct_app2stu":99.44,"pct_reg2app":89.22},"td":{"app":2,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":2,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.5,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":974,"reg":868,"regular":821,"transfer":47,"cont":125,"totreg":993,"unreg":47,"dropall":59,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":89.12},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":0,"dropall":1,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Nabatieh":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":4,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":4,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":4,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":4,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.25,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":670,"reg":563,"regular":539,"transfer":24,"cont":84,"totreg":647,"unreg":2,"dropall":2,"stillapp":103,"pct_app2stu":84.63,"pct_reg2app":84.03},"td":{"app":3,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":3,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":2,"totreg2":2,"appdiff":-0.33333333333333,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":522,"reg":338,"regular":321,"transfer":17,"cont":78,"totreg":416,"unreg":5,"dropall":81,"stillapp":98,"pct_app2stu":81.23,"pct_reg2app":64.75},"td":{"app":4,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":1,"stillapp":3,"pct_app2stu":25.0,"pct_reg2app":0.0,"regafter":2,"totreg2":2,"appdiff":-6.75,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":841,"reg":621,"regular":583,"transfer":38,"cont":52,"totreg":673,"unreg":5,"dropall":27,"stillapp":188,"pct_app2stu":77.65,"pct_reg2app":73.84},"td":{"app":31,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":0,"dropall":1,"stillapp":30,"pct_app2stu":3.23,"pct_reg2app":0.0,"regafter":12,"totreg2":12,"appdiff":-1.6129032258065,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":1334,"reg":818,"regular":777,"transfer":41,"cont":63,"totreg":881,"unreg":42,"dropall":27,"stillapp":447,"pct_app2stu":66.49,"pct_reg2app":61.32},"td":{"app":81,"reg":0,"regular":0,"transfer":0,"cont":2,"totreg":2,"unreg":1,"dropall":1,"stillapp":79,"pct_app2stu":2.47,"pct_reg2app":0.0,"regafter":19,"totreg2":19,"appdiff":0.7283950617284,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":1473,"reg":963,"regular":898,"transfer":65,"cont":154,"totreg":1117,"unreg":5,"dropall":17,"stillapp":488,"pct_app2stu":66.87,"pct_reg2app":65.38},"td":{"app":22,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":22,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":8,"totreg2":8,"appdiff":-1.3181818181818,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":995,"reg":824,"regular":765,"transfer":59,"cont":219,"totreg":1043,"unreg":5,"dropall":25,"stillapp":141,"pct_app2stu":85.83,"pct_reg2app":82.81},"td":{"app":51,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":50,"pct_app2stu":1.96,"pct_reg2app":0.0,"regafter":25,"totreg2":25,"appdiff":0.82352941176471,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":702,"reg":597,"regular":538,"transfer":59,"cont":135,"totreg":732,"unreg":25,"dropall":16,"stillapp":64,"pct_app2stu":90.88,"pct_reg2app":85.04},"td":{"app":9,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":9,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":0,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":716,"reg":623,"regular":574,"transfer":49,"cont":126,"totreg":749,"unreg":33,"dropall":21,"stillapp":39,"pct_app2stu":94.55,"pct_reg2app":87.01},"td":{"app":9,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":9,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":1,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":699,"reg":647,"regular":598,"transfer":49,"cont":117,"totreg":764,"unreg":33,"dropall":18,"stillapp":1,"pct_app2stu":99.86,"pct_reg2app":92.56},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":654,"reg":598,"regular":540,"transfer":58,"cont":83,"totreg":681,"unreg":33,"dropall":22,"stillapp":1,"pct_app2stu":99.85,"pct_reg2app":91.44},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Tripoli":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":15,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":15,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":15,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":15,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.66666666666667,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":919,"reg":682,"regular":649,"transfer":33,"cont":98,"totreg":780,"unreg":9,"dropall":7,"stillapp":221,"pct_app2stu":75.95,"pct_reg2app":74.21},"td":{"app":5,"reg":0,"regular":0,"transfer":0,"cont":1,"totreg":1,"unreg":0,"dropall":0,"stillapp":5,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":4,"totreg2":4,"appdiff":0,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":1057,"reg":773,"regular":728,"transfer":45,"cont":109,"totreg":882,"unreg":11,"dropall":28,"stillapp":245,"pct_app2stu":76.82,"pct_reg2app":73.13},"td":{"app":5,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":5,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":-12.8,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":1488,"reg":1002,"regular":924,"transfer":78,"cont":80,"totreg":1082,"unreg":28,"dropall":18,"stillapp":440,"pct_app2stu":70.43,"pct_reg2app":67.34},"td":{"app":69,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":1,"stillapp":68,"pct_app2stu":1.45,"pct_reg2app":0.0,"regafter":9,"totreg2":9,"appdiff":-0.31884057971014,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":2310,"reg":1107,"regular":1037,"transfer":70,"cont":113,"totreg":1220,"unreg":38,"dropall":31,"stillapp":1134,"pct_app2stu":50.91,"pct_reg2app":47.92},"td":{"app":91,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":1,"stillapp":89,"pct_app2stu":2.2,"pct_reg2app":0.0,"regafter":25,"totreg2":25,"appdiff":0.3956043956044,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":2236,"reg":1168,"regular":1116,"transfer":52,"cont":185,"totreg":1353,"unreg":77,"dropall":23,"stillapp":968,"pct_app2stu":56.71,"pct_reg2app":52.24},"td":{"app":55,"reg":0,"regular":0,"transfer":0,"cont":1,"totreg":1,"unreg":1,"dropall":0,"stillapp":54,"pct_app2stu":1.82,"pct_reg2app":0.0,"regafter":10,"totreg2":10,"appdiff":-0.2,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":1454,"reg":1100,"regular":1063,"transfer":37,"cont":151,"totreg":1251,"unreg":22,"dropall":13,"stillapp":319,"pct_app2stu":78.06,"pct_reg2app":75.65},"td":{"app":66,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":65,"pct_app2stu":1.52,"pct_reg2app":0.0,"regafter":5,"totreg2":5,"appdiff":0.72727272727273,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":1296,"reg":1035,"regular":958,"transfer":77,"cont":143,"totreg":1178,"unreg":16,"dropall":26,"stillapp":219,"pct_app2stu":83.1,"pct_reg2app":79.86},"td":{"app":18,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":18,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-0.5,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":1370,"reg":1081,"regular":995,"transfer":86,"cont":150,"totreg":1231,"unreg":18,"dropall":32,"stillapp":239,"pct_app2stu":82.55,"pct_reg2app":78.91},"td":{"app":27,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":27,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.88888888888889,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":1112,"reg":1043,"regular":965,"transfer":78,"cont":141,"totreg":1184,"unreg":18,"dropall":40,"stillapp":11,"pct_app2stu":99.01,"pct_reg2app":93.79},"td":{"app":3,"reg":1,"regular":1,"transfer":0,"cont":0,"totreg":1,"unreg":2,"dropall":0,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":33.33,"regafter":0,"totreg2":1,"appdiff":-1.6666666666667,"regdiff":0},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":962,"reg":903,"regular":825,"transfer":78,"cont":101,"totreg":1004,"unreg":14,"dropall":29,"stillapp":16,"pct_app2stu":98.34,"pct_reg2app":93.87},"td":{"app":8,"reg":1,"regular":0,"transfer":1,"cont":3,"totreg":4,"unreg":0,"dropall":0,"stillapp":7,"pct_app2stu":12.5,"pct_reg2app":12.5,"regafter":0,"totreg2":1,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Mount Lebanon":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":16,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":16,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":16,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":16,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.375,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":267,"reg":220,"regular":202,"transfer":18,"cont":31,"totreg":251,"unreg":1,"dropall":7,"stillapp":39,"pct_app2stu":85.39,"pct_reg2app":82.4},"td":{"app":10,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":10,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":8,"totreg2":8,"appdiff":-0.6,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":330,"reg":258,"regular":234,"transfer":24,"cont":23,"totreg":281,"unreg":5,"dropall":26,"stillapp":41,"pct_app2stu":87.58,"pct_reg2app":78.18},"td":{"app":16,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":5,"stillapp":11,"pct_app2stu":31.25,"pct_reg2app":0.0,"regafter":11,"totreg2":11,"appdiff":-1.8125,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":399,"reg":294,"regular":270,"transfer":24,"cont":39,"totreg":333,"unreg":4,"dropall":15,"stillapp":86,"pct_app2stu":78.45,"pct_reg2app":73.68},"td":{"app":45,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":3,"stillapp":42,"pct_app2stu":6.67,"pct_reg2app":0.0,"regafter":27,"totreg2":27,"appdiff":-0.022222222222222,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":449,"reg":271,"regular":254,"transfer":17,"cont":28,"totreg":299,"unreg":11,"dropall":24,"stillapp":143,"pct_app2stu":68.15,"pct_reg2app":60.36},"td":{"app":46,"reg":1,"regular":0,"transfer":1,"cont":2,"totreg":3,"unreg":1,"dropall":3,"stillapp":41,"pct_app2stu":10.87,"pct_reg2app":2.17,"regafter":19,"totreg2":20,"appdiff":0.17391304347826,"regdiff":1},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":634,"reg":367,"regular":339,"transfer":28,"cont":67,"totreg":434,"unreg":19,"dropall":21,"stillapp":227,"pct_app2stu":64.2,"pct_reg2app":57.89},"td":{"app":38,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":1,"stillapp":36,"pct_app2stu":5.26,"pct_reg2app":0.0,"regafter":15,"totreg2":15,"appdiff":-1,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":487,"reg":323,"regular":298,"transfer":25,"cont":67,"totreg":390,"unreg":7,"dropall":23,"stillapp":134,"pct_app2stu":72.48,"pct_reg2app":66.32},"td":{"app":76,"reg":8,"regular":8,"transfer":0,"cont":0,"totreg":8,"unreg":1,"dropall":6,"stillapp":61,"pct_app2stu":19.74,"pct_reg2app":10.53,"regafter":30,"totreg2":38,"appdiff":0.72368421052632,"regdiff":0.875},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":496,"reg":360,"regular":314,"transfer":46,"cont":55,"totreg":415,"unreg":17,"dropall":14,"stillapp":105,"pct_app2stu":78.83,"pct_reg2app":72.58},"td":{"app":21,"reg":1,"regular":1,"transfer":0,"cont":1,"totreg":2,"unreg":1,"dropall":0,"stillapp":19,"pct_app2stu":9.52,"pct_reg2app":4.76,"regafter":9,"totreg2":10,"appdiff":0.14285714285714,"regdiff":1},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":469,"reg":330,"regular":286,"transfer":44,"cont":48,"totreg":378,"unreg":25,"dropall":18,"stillapp":96,"pct_app2stu":79.53,"pct_reg2app":70.36},"td":{"app":18,"reg":0,"regular":0,"transfer":0,"cont":1,"totreg":1,"unreg":0,"dropall":0,"stillapp":18,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":1,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":315,"reg":292,"regular":265,"transfer":27,"cont":44,"totreg":336,"unreg":10,"dropall":13,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":92.7},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":270,"reg":219,"regular":197,"transfer":22,"cont":22,"totreg":241,"unreg":12,"dropall":35,"stillapp":4,"pct_app2stu":98.52,"pct_reg2app":81.11},"td":{"app":2,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":2,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Tyre":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":15,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":15,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":15,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":15,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.73333333333333,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":961,"reg":832,"regular":804,"transfer":28,"cont":80,"totreg":912,"unreg":27,"dropall":34,"stillapp":68,"pct_app2stu":92.92,"pct_reg2app":86.58},"td":{"app":4,"reg":0,"regular":0,"transfer":0,"cont":1,"totreg":1,"unreg":1,"dropall":0,"stillapp":3,"pct_app2stu":25.0,"pct_reg2app":0.0,"regafter":2,"totreg2":2,"appdiff":-0.75,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":876,"reg":608,"regular":587,"transfer":21,"cont":56,"totreg":664,"unreg":59,"dropall":133,"stillapp":76,"pct_app2stu":91.32,"pct_reg2app":69.41},"td":{"app":7,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":7,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":-2,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":1027,"reg":834,"regular":808,"transfer":26,"cont":59,"totreg":893,"unreg":26,"dropall":32,"stillapp":135,"pct_app2stu":86.85,"pct_reg2app":81.21},"td":{"app":21,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":21,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":11,"totreg2":11,"appdiff":-0.85714285714286,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":1382,"reg":1012,"regular":975,"transfer":37,"cont":71,"totreg":1083,"unreg":41,"dropall":30,"stillapp":299,"pct_app2stu":78.36,"pct_reg2app":73.23},"td":{"app":39,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":39,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":10,"totreg2":10,"appdiff":0.35897435897436,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":1577,"reg":1128,"regular":1069,"transfer":59,"cont":120,"totreg":1248,"unreg":61,"dropall":13,"stillapp":375,"pct_app2stu":76.22,"pct_reg2app":71.53},"td":{"app":25,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":25,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":5,"totreg2":5,"appdiff":-0.04,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":1073,"reg":878,"regular":838,"transfer":40,"cont":165,"totreg":1043,"unreg":13,"dropall":50,"stillapp":132,"pct_app2stu":87.7,"pct_reg2app":81.83},"td":{"app":26,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":1,"stillapp":25,"pct_app2stu":3.85,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":0.69230769230769,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":973,"reg":855,"regular":804,"transfer":51,"cont":114,"totreg":969,"unreg":24,"dropall":31,"stillapp":63,"pct_app2stu":93.53,"pct_reg2app":87.87},"td":{"app":8,"reg":2,"regular":2,"transfer":0,"cont":0,"totreg":2,"unreg":1,"dropall":0,"stillapp":5,"pct_app2stu":37.5,"pct_reg2app":25.0,"regafter":0,"totreg2":2,"appdiff":-1.125,"regdiff":1},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":982,"reg":844,"regular":794,"transfer":50,"cont":102,"totreg":946,"unreg":27,"dropall":35,"stillapp":76,"pct_app2stu":92.26,"pct_reg2app":85.95},"td":{"app":17,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":17,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":1,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":740,"reg":689,"regular":668,"transfer":21,"cont":89,"totreg":778,"unreg":30,"dropall":20,"stillapp":1,"pct_app2stu":99.86,"pct_reg2app":93.11},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":590,"reg":476,"regular":459,"transfer":17,"cont":100,"totreg":576,"unreg":33,"dropall":80,"stillapp":1,"pct_app2stu":99.83,"pct_reg2app":80.68},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Rayak":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":10,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":10,"pct_app2stu":0.0,"pct_reg2app":0.0},"td":{"app":10,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":10,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.9,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":636,"reg":555,"regular":525,"transfer":30,"cont":89,"totreg":644,"unreg":12,"dropall":11,"stillapp":58,"pct_app2stu":90.88,"pct_reg2app":87.26},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":1,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":-2,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":529,"reg":464,"regular":444,"transfer":20,"cont":73,"totreg":537,"unreg":3,"dropall":21,"stillapp":41,"pct_app2stu":92.25,"pct_reg2app":87.71},"td":{"app":3,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":3,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":-2.3333333333333,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":606,"reg":513,"regular":485,"transfer":28,"cont":57,"totreg":570,"unreg":16,"dropall":5,"stillapp":72,"pct_app2stu":88.12,"pct_reg2app":84.65},"td":{"app":10,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":10,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":3,"totreg2":3,"appdiff":0.3,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":633,"reg":500,"regular":481,"transfer":19,"cont":51,"totreg":551,"unreg":36,"dropall":8,"stillapp":89,"pct_app2stu":85.94,"pct_reg2app":78.99},"td":{"app":7,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":7,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.57142857142857,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":1036,"reg":923,"regular":878,"transfer":45,"cont":161,"totreg":1084,"unreg":5,"dropall":10,"stillapp":98,"pct_app2stu":90.54,"pct_reg2app":89.09},"td":{"app":3,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":3,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-1.3333333333333,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":987,"reg":899,"regular":876,"transfer":23,"cont":144,"totreg":1043,"unreg":10,"dropall":11,"stillapp":67,"pct_app2stu":93.21,"pct_reg2app":91.08},"td":{"app":7,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":7,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":0.42857142857143,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":856,"reg":771,"regular":724,"transfer":47,"cont":99,"totreg":870,"unreg":33,"dropall":6,"stillapp":46,"pct_app2stu":94.63,"pct_reg2app":90.07},"td":{"app":4,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":4,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.25,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":718,"reg":645,"regular":600,"transfer":45,"cont":103,"totreg":748,"unreg":26,"dropall":6,"stillapp":41,"pct_app2stu":94.29,"pct_reg2app":89.83},"td":{"app":3,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":2,"pct_app2stu":33.33,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":1,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":608,"reg":577,"regular":540,"transfer":37,"cont":102,"totreg":679,"unreg":19,"dropall":12,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":94.9},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":414,"reg":361,"regular":347,"transfer":14,"cont":61,"totreg":422,"unreg":24,"dropall":29,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":87.2},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}},"Akkar":{"asof":"Till Today: Wednesday 24th June 2026","years":{"2026-2027":{"tt":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":0.0},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0,"regdiff":null},"tddate":"Wednesday 24th June 2026"},"2025-2026":{"tt":{"app":320,"reg":276,"regular":266,"transfer":10,"cont":53,"totreg":329,"unreg":1,"dropall":6,"stillapp":37,"pct_app2stu":88.44,"pct_reg2app":86.25},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":1,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":0,"regdiff":null},"tddate":"Wednesday 25th June 2025"},"2024-2025":{"tt":{"app":409,"reg":338,"regular":324,"transfer":14,"cont":44,"totreg":382,"unreg":0,"dropall":14,"stillapp":57,"pct_app2stu":86.06,"pct_reg2app":82.64},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":1,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-4,"regdiff":null},"tddate":"Wednesday 26th June 2024"},"2023-2024":{"tt":{"app":448,"reg":327,"regular":309,"transfer":18,"cont":25,"totreg":352,"unreg":10,"dropall":4,"stillapp":107,"pct_app2stu":76.12,"pct_reg2app":72.99},"td":{"app":5,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":4,"pct_app2stu":20.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0,"regdiff":null},"tddate":"Wednesday 28th June 2023"},"2022-2023":{"tt":{"app":696,"reg":520,"regular":483,"transfer":37,"cont":28,"totreg":548,"unreg":14,"dropall":19,"stillapp":143,"pct_app2stu":79.45,"pct_reg2app":74.71},"td":{"app":5,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":5,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":0.6,"regdiff":null},"tddate":"Wednesday 22nd June 2022"},"2021-2022":{"tt":{"app":760,"reg":624,"regular":589,"transfer":35,"cont":71,"totreg":695,"unreg":36,"dropall":15,"stillapp":85,"pct_app2stu":88.82,"pct_reg2app":82.11},"td":{"app":2,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":2,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":-6,"regdiff":null},"tddate":"Wednesday 23rd June 2021"},"2020-2021":{"tt":{"app":654,"reg":591,"regular":562,"transfer":29,"cont":92,"totreg":683,"unreg":37,"dropall":13,"stillapp":13,"pct_app2stu":98.01,"pct_reg2app":90.37},"td":{"app":14,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":4,"dropall":0,"stillapp":10,"pct_app2stu":28.57,"pct_reg2app":0.0,"regafter":10,"totreg2":10,"appdiff":0.78571428571429,"regdiff":null},"tddate":"Wednesday 24th June 2020"},"2019-2020":{"tt":{"app":654,"reg":577,"regular":540,"transfer":37,"cont":54,"totreg":631,"unreg":49,"dropall":10,"stillapp":18,"pct_app2stu":97.25,"pct_reg2app":88.23},"td":{"app":3,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":3,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":2,"totreg2":2,"appdiff":-1.3333333333333,"regdiff":null},"tddate":"Wednesday 26th June 2019"},"2018-2019":{"tt":{"app":530,"reg":464,"regular":423,"transfer":41,"cont":49,"totreg":513,"unreg":39,"dropall":13,"stillapp":14,"pct_app2stu":97.36,"pct_reg2app":87.55},"td":{"app":7,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":2,"dropall":0,"stillapp":5,"pct_app2stu":28.57,"pct_reg2app":0.0,"regafter":1,"totreg2":1,"appdiff":0.85714285714286,"regdiff":null},"tddate":"Wednesday 27th June 2018"},"2017-2018":{"tt":{"app":445,"reg":412,"regular":381,"transfer":31,"cont":27,"totreg":439,"unreg":10,"dropall":21,"stillapp":2,"pct_app2stu":99.55,"pct_reg2app":92.58},"td":{"app":1,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":1,"dropall":0,"stillapp":0,"pct_app2stu":100.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":1,"regdiff":null},"tddate":"Wednesday 28th June 2017"},"2016-2017":{"tt":{"app":352,"reg":283,"regular":268,"transfer":15,"cont":13,"totreg":296,"unreg":11,"dropall":55,"stillapp":3,"pct_app2stu":99.15,"pct_reg2app":80.4},"td":{"app":0,"reg":0,"regular":0,"transfer":0,"cont":0,"totreg":0,"unreg":0,"dropall":0,"stillapp":0,"pct_app2stu":0.0,"pct_reg2app":0.0,"regafter":0,"totreg2":0,"appdiff":null,"regdiff":null},"tddate":"Wednesday 29th June 2016"}}}},"allCampuses":{"2026-2027":{"app":345,"reg":0,"pct":null,"appdiff":2.1944444444444,"regdiff":-1},"2025-2026":{"app":108,"reg":1,"pct":108,"appdiff":-0.044247787610619,"regdiff":null},"2024-2025":{"app":113,"reg":0,"pct":null,"appdiff":-0.8081494057725,"regdiff":-1},"2023-2024":{"app":589,"reg":36,"pct":16.361111111111,"appdiff":-0.40142276422764,"regdiff":17},"2022-2023":{"app":984,"reg":2,"pct":492,"appdiff":0.95626242544732,"regdiff":-0.75},"2021-2022":{"app":503,"reg":8,"pct":62.875,"appdiff":-0.60733801717408,"regdiff":-0.97900262467192},"2020-2021":{"app":1281,"reg":381,"pct":3.3622047244094,"appdiff":3.0796178343949,"regdiff":75.2},"2019-2020":{"app":314,"reg":5,"pct":62.8,"appdiff":-0.18015665796345,"regdiff":0.66666666666667},"2018-2019":{"app":383,"reg":3,"pct":127.66666666667,"appdiff":2.218487394958,"regdiff":0},"2017-2018":{"app":119,"reg":3,"pct":39.666666666667,"appdiff":3.9583333333333,"regdiff":2},"2016-2017":{"app":24,"reg":1,"pct":24,"appdiff":null,"regdiff":null}},"excluding":{"2026-2027":{"app":317,"reg":0,"pct":null,"appdiff":2.0480769230769,"regdiff":null},"2025-2026":{"app":104,"reg":0,"pct":null,"appdiff":-0.0095238095238095,"regdiff":null},"2024-2025":{"app":105,"reg":0,"pct":null,"appdiff":-0.80769230769231,"regdiff":-1},"2023-2024":{"app":546,"reg":34,"pct":16.058823529412,"appdiff":-0.42099681866384,"regdiff":16},"2022-2023":{"app":943,"reg":2,"pct":471.5,"appdiff":0.940329218107,"regdiff":-0.75},"2021-2022":{"app":486,"reg":8,"pct":60.75,"appdiff":-0.59701492537313,"regdiff":-0.97900262467192},"2020-2021":{"app":1206,"reg":381,"pct":3.1653543307087,"appdiff":3.0743243243243,"regdiff":75.2},"2019-2020":{"app":296,"reg":5,"pct":59.2,"appdiff":-0.19565217391304,"regdiff":0.66666666666667},"2018-2019":{"app":368,"reg":3,"pct":122.66666666667,"appdiff":2.0924369747899,"regdiff":0},"2017-2018":{"app":119,"reg":3,"pct":39.666666666667,"appdiff":4.1739130434783,"regdiff":2},"2016-2017":{"app":23,"reg":1,"pct":23,"appdiff":null,"regdiff":null}},"campusDiff":{"Beirut":{"appdiff":159,"regdiff":0},"Bekaa":{"appdiff":15,"regdiff":-1},"Saida":{"appdiff":26,"regdiff":0},"Nabatieh":{"appdiff":1,"regdiff":0},"Tripoli":{"appdiff":10,"regdiff":0},"Mount Lebanon":{"appdiff":6,"regdiff":0},"Tyre":{"appdiff":11,"regdiff":0},"Rayak":{"appdiff":9,"regdiff":0},"Akkar":{"appdiff":0,"regdiff":0},"All Campuses":{"appdiff":237,"regdiff":-1}},"asof":"Till Today: Wednesday 24th June 2026","years":["2026-2027","2025-2026","2024-2025","2023-2024","2022-2023","2021-2022","2020-2021","2019-2020","2018-2019","2017-2018","2016-2017"]};
+
+(function(){
+  const IT = IT_DATA;
+  const YEARS = IT.years;                 // newest -> oldest
+  const CHRON = YEARS.slice().reverse();  // oldest -> newest
+  const CAMPS = Object.keys(IT.campuses);
+  const CUR = '2026-2027', LAST = '2025-2026';
+  const Cc = {navy:'#0a2a5e',blue:'#2f6fd0',gold:'#e0a500',teal:'#1aa39a',slate:'#94a3b8'};
+  const fmt = n => (n==null?'\u2014':Math.round(n).toLocaleString('en-US'));
+  const shortY = y => y.slice(2,4)+'-'+y.slice(7,9);
+  const sumTT = (y,k)=>CAMPS.reduce((a,c)=>a+(IT.campuses[c].years[y].tt[k]||0),0);
+  const sumTD = (y,k)=>CAMPS.reduce((a,c)=>a+(IT.campuses[c].years[y].td[k]||0),0);
+  const pct = (n,d)=> d? +(n/d*100).toFixed(1) : 0;
+
+  let built = false;
+  function build(){
+    if(built) return; built = true;
+
+    /* ---- header / KPIs ---- */
+    const asof = (IT.asof||'').replace('Till Today:','').trim();
+    document.getElementById('it_asof').textContent = asof;
+
+    const appCur = IT.allCampuses[CUR].app, appLast = IT.allCampuses[LAST].app;
+    document.getElementById('it_app').textContent = fmt(appCur);
+    const dpct = appLast? Math.round((appCur-appLast)/appLast*100):0;
+    document.getElementById('it_app_sub').innerHTML =
+      `<span class="${dpct>=0?'up':'flat'}">${dpct>=0?'+':''}${dpct}%</span> vs ${fmt(appLast)} same date last year`;
+    document.getElementById('it_reg').textContent = fmt(IT.allCampuses[CUR].reg);
+    document.getElementById('it_reg_sub').textContent = 'registrations open later in the cycle';
+    const reporting = CAMPS.filter(c=>(IT.campuses[c].years[CUR].td.app||0)>0).length;
+    document.getElementById('it_camp').textContent = reporting+' / '+CAMPS.length;
+    const lApp = sumTT(LAST,'app'), lReg = sumTT(LAST,'totreg');
+    document.getElementById('it_last').textContent = fmt(lApp);
+    document.getElementById('it_last_sub').innerHTML =
+      `applicants &middot; ${fmt(lReg)} registered (${pct(lReg,lApp)}%)`;
+
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.color = '#46566c';
+    const grid = {color:'#eef1f7'}, nogrid={display:false};
+
+    /* ---- 1) Applicants by campus: this year vs same date last year ---- */
+    new Chart(document.getElementById('itCampus'),{
+      type:'bar',
+      data:{labels:CAMPS,datasets:[
+        {label:'Fall 26-27 (to date)',data:CAMPS.map(c=>IT.campuses[c].years[CUR].td.app),
+         backgroundColor:Cc.gold,borderRadius:4,maxBarThickness:22},
+        {label:'Fall 25-26 (same date)',data:CAMPS.map(c=>IT.campuses[c].years[LAST].td.app),
+         backgroundColor:Cc.blue,borderRadius:4,maxBarThickness:22}
+      ]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        scales:{x:{beginAtZero:true,grid:grid,ticks:{precision:0}},y:{grid:nogrid,ticks:{font:{size:12}}}},
+        plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
+          tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.x)}`}}}}
+    });
+
+    /* ---- 2) Applicants at this point in cycle, by year ---- */
+    new Chart(document.getElementById('itPace'),{
+      type:'bar',
+      data:{labels:CHRON.map(shortY),datasets:[
+        {label:'Applicants to date',data:CHRON.map(y=>IT.allCampuses[y].app),
+         backgroundColor:CHRON.map(y=>y===CUR?Cc.gold:Cc.navy),borderRadius:5,maxBarThickness:46}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true,grid:grid,title:{display:true,text:'Applicants (all campuses)'}},x:{grid:nogrid}},
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{title:i=>'Fall '+CHRON[i[0].dataIndex],
+            label:c=>` ${fmt(c.parsed.y)} applicants at this date`,
+            afterLabel:c=>{const y=CHRON[c.dataIndex];return ` ${fmt(IT.allCampuses[y].reg)} registered to date`;}}}}}
+    });
+
+    /* ---- 3) Full-semester volume + conversion, by year (completed cycles) ---- */
+    const done = CHRON.filter(y=>y!==CUR);
+    new Chart(document.getElementById('itFunnel'),{
+      data:{labels:done.map(shortY),datasets:[
+        {type:'bar',label:'Applicants (full semester)',data:done.map(y=>sumTT(y,'app')),
+         backgroundColor:Cc.blue,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
+        {type:'bar',label:'Total registered',data:done.map(y=>sumTT(y,'totreg')),
+         backgroundColor:Cc.teal,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
+        {type:'line',label:'Conversion %',data:done.map(y=>pct(sumTT(y,'totreg'),sumTT(y,'app'))),
+         borderColor:Cc.gold,backgroundColor:Cc.gold,borderWidth:3,tension:.25,pointRadius:3,yAxisID:'y1'}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        scales:{
+          y:{beginAtZero:true,position:'left',grid:grid,title:{display:true,text:'Students'}},
+          y1:{beginAtZero:true,max:120,position:'right',grid:nogrid,ticks:{callback:v=>v+'%'},title:{display:true,text:'Conversion'}},
+          x:{grid:nogrid}},
+        plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
+          tooltip:{callbacks:{title:i=>'Fall '+done[i[0].dataIndex],
+            label:c=>c.dataset.type==='line'?` Conversion: ${c.parsed.y}%`:` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}
+    });
+
+    /* ---- 4) Conversion % by campus, last completed semester ---- */
+    const convRows = CAMPS.map(c=>[c,IT.campuses[c].years[LAST].tt.pct_reg2app||0]).sort((a,b)=>b[1]-a[1]);
+    new Chart(document.getElementById('itConv'),{
+      type:'bar',
+      data:{labels:convRows.map(r=>r[0]),datasets:[
+        {data:convRows.map(r=>r[1]),backgroundColor:Cc.teal,borderRadius:4,maxBarThickness:24}
+      ]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        scales:{x:{beginAtZero:true,max:100,grid:grid,ticks:{callback:v=>v+'%'}},y:{grid:nogrid,ticks:{font:{size:12}}}},
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>` ${c.parsed.x}% registered`}}}}
+    });
+
+    /* ---- 5) Applicant outcomes, Fall 25-26 (doughnut) ---- */
+    const oc = [['Registered',sumTT(LAST,'reg'),Cc.teal],
+                ['Still applicant',sumTT(LAST,'stillapp'),Cc.gold],
+                ['Unregistered',sumTT(LAST,'unreg'),Cc.slate],
+                ['Drop all',sumTT(LAST,'dropall'),'#dfe5ee']];
+    const ocTot = oc.reduce((a,b)=>a+b[1],0);
+    new Chart(document.getElementById('itOutcome'),{
+      type:'doughnut',
+      data:{labels:oc.map(o=>o[0]),datasets:[{data:oc.map(o=>o[1]),backgroundColor:oc.map(o=>o[2]),borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:12.5}}},
+          tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)} (${pct(c.parsed,ocTot)}%)`}}}}
+    });
+
+    /* ---- 6) Registered-student composition, Fall 25-26 ---- */
+    const mix=[['New regular',sumTT(LAST,'regular'),Cc.navy],
+               ['New transfer',sumTT(LAST,'transfer'),Cc.blue],
+               ['Continuing',sumTT(LAST,'cont'),Cc.gold]];
+    const mixTot=mix.reduce((a,b)=>a+b[1],0);
+    new Chart(document.getElementById('itMix'),{
+      type:'bar',
+      data:{labels:['Total registered'],datasets:mix.map(m=>({label:m[0],data:[m[1]],backgroundColor:m[2],borderRadius:4,maxBarThickness:60}))},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        scales:{x:{stacked:true,beginAtZero:true,grid:grid},y:{stacked:true,grid:nogrid}},
+        plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
+          tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.x)} (${pct(c.parsed.x,mixTot)}%)`}}}}
+    });
+
+    /* ---- detail table ---- */
+    const selC=document.getElementById('selCampus'), selY=document.getElementById('selYear');
+    ['All Campuses',...CAMPS].forEach(c=>selC.add(new Option(c,c)));
+    YEARS.forEach(y=>selY.add(new Option('Fall '+y,y)));
+    let mode='tt';
+    function metrics(camp,y,m){
+      if(camp==='All Campuses'){
+        const s=k=> (m==='tt'?sumTT:sumTD)(y,k);
+        const o={app:s('app'),reg:s('reg'),regular:s('regular'),transfer:s('transfer'),cont:s('cont'),
+                 totreg:s('totreg'),unreg:s('unreg'),dropall:s('dropall'),stillapp:s('stillapp')};
+        o.pct_app2stu=pct(o.app-o.stillapp,o.app); o.pct_reg2app=pct(o.reg,o.app); return o;
+      }
+      return IT.campuses[camp].years[y][m];
+    }
+    const ROWS=[
+      ['app','Applicants','tot'],
+      ['reg','Registered (new)','sub'],
+      ['regular','Regular','sub'],['transfer','Transfer','sub'],
+      ['cont','Continuing students','sub'],
+      ['totreg','Total registered','tot'],
+      ['unreg','Unregistered','sub'],['dropall','Drop all','sub'],['stillapp','Still applicant','sub'],
+      ['pct_app2stu','% Applicant \u2192 Student','pctrow'],
+      ['pct_reg2app','% Registered \u2192 Applicant','pctrow']
+    ];
+    function renderTable(){
+      const camp=selC.value, y=selY.value;
+      const o=metrics(camp,y,mode);
+      const tb=document.getElementById('itTableBody');
+      let h='<tr><th>Metric</th><th style="text-align:right">Value</th></tr>';
+      ROWS.forEach(([k,lab,cls])=>{
+        const isPct=cls==='pctrow';
+        const v=o[k]; const disp=isPct?((v==null?'\u2014':v+'%')):fmt(v);
+        const rc = cls==='tot'?'tot':(cls==='sub'?'sub':'');
+        h+=`<tr class="${rc}"><td class="lab">${lab}</td><td class="num">${disp}</td></tr>`;
+      });
+      tb.innerHTML=h;
+    }
+    selC.value='All Campuses'; selY.value=CUR;
+    selC.onchange=renderTable; selY.onchange=renderTable;
+    document.querySelectorAll('#segMode button').forEach(b=>b.onclick=()=>{
+      document.querySelectorAll('#segMode button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); mode=b.dataset.mode; renderTable();
+    });
+    renderTable();
+  }
+
+  /* ---- tab switching (lazy-init charts when IT tab first shown) ---- */
+  document.querySelectorAll('.tabbtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.tab;
+      document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b===btn));
+      document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active',p.id===id));
+      if(id==='tab-it') build();
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+})();
 </script>
 </body>
 </html>
