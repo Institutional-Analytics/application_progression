@@ -105,7 +105,7 @@
 <nav class="tabs">
   <div class="wrap">
     <button class="tabbtn active" data-tab="tab-yoy">Beirut — Year over Year</button>
-    <button class="tabbtn" data-tab="tab-it">IT Report — All Campuses</button>
+    <button class="tabbtn" data-tab="tab-it">IT Report — By Campus</button>
   </div>
 </nav>
 
@@ -208,6 +208,19 @@
     Snapshot: <b id="it_asof">&mdash;</b>.
   </div>
 
+  <div class="ctrls" style="margin:18px 0 2px">
+    <div class="fld">
+      <label for="itScope">Report scope</label>
+      <select id="itScope">
+        <optgroup label="Single campus" id="itScopeCampuses"></optgroup>
+        <option value="exBekaa">All campuses (except Bekaa)</option>
+      </select>
+    </div>
+    <span class="cmp" style="align-self:flex-end;padding-bottom:9px;color:var(--muted);font-size:13px">
+      The KPIs and aggregate charts below reflect this scope. The two by-campus charts always show every campus.
+    </span>
+  </div>
+
   <section class="grid kpis">
     <div class="kpi">
       <div class="lab">Fall 2026-27 applicants to date</div>
@@ -241,13 +254,13 @@
 
     <div class="card full">
       <h3>Where Fall 2026-27 sits vs prior semesters at this date</h3>
-      <p class="cap">All-campuses applicants recorded at the same late-June calendar date in each cycle. Fall 26-27 (gold) is the focus semester; earlier cycles give the historical range.</p>
+      <p class="cap">Applicants for <span class="scopeLabel">all campuses</span> recorded at the same late-June calendar date in each cycle. Fall 26-27 (gold) is the focus semester; earlier cycles give the historical range.</p>
       <div class="chartbox h-mid"><canvas id="itPace"></canvas></div>
     </div>
 
     <div class="card full">
       <h3>Where prior semesters landed &mdash; full-semester applicants, registrations &amp; conversion</h3>
-      <p class="cap">All-campuses end-of-cycle totals for completed semesters &mdash; the trajectory Fall 26-27 will be measured against. Bars = volume (left axis); line = % of applicants who became registered students (right axis).</p>
+      <p class="cap">End-of-cycle totals for <span class="scopeLabel">all campuses</span> across completed semesters &mdash; the trajectory Fall 26-27 will be measured against. Bars = volume (left axis); line = % of applicants who became registered students (right axis).</p>
       <div class="chartbox h-tall"><canvas id="itFunnel"></canvas></div>
     </div>
 
@@ -259,13 +272,13 @@
 
     <div class="card">
       <h3>Applicant outcomes &mdash; Fall 25-26</h3>
-      <p class="cap">How the all-campuses applicant pool resolved by semester's end.</p>
+      <p class="cap">How the applicant pool for <span class="scopeLabel">all campuses</span> resolved by semester's end.</p>
       <div class="chartbox h-major"><canvas id="itOutcome"></canvas></div>
     </div>
 
     <div class="card full">
       <h3>Registered-student composition &mdash; Fall 25-26</h3>
-      <p class="cap">Total registered students broken into new regular, new transfer, and continuing students (all campuses).</p>
+      <p class="cap">Total registered students broken into new regular, new transfer, and continuing students (<span class="scopeLabel">all campuses</span>).</p>
       <div class="chartbox h-mid"><canvas id="itMix"></canvas></div>
     </div>
 
@@ -467,42 +480,40 @@ const IT_DATA = {"campuses":{"Beirut":{"asof":"Till Today: Wednesday 24th June 2
   const IT = IT_DATA;
   const YEARS = IT.years;                 // newest -> oldest
   const CHRON = YEARS.slice().reverse();  // oldest -> newest
-  const CAMPS = Object.keys(IT.campuses);
+  const CAMPS = Object.keys(IT.campuses); // every campus, in file order
   const CUR = '2026-2027', LAST = '2025-2026';
   const Cc = {navy:'#0a2a5e',blue:'#2f6fd0',gold:'#e0a500',teal:'#1aa39a',slate:'#94a3b8'};
   const fmt = n => (n==null?'\u2014':Math.round(n).toLocaleString('en-US'));
   const shortY = y => y.slice(2,4)+'-'+y.slice(7,9);
-  const sumTT = (y,k)=>CAMPS.reduce((a,c)=>a+(IT.campuses[c].years[y].tt[k]||0),0);
-  const sumTD = (y,k)=>CAMPS.reduce((a,c)=>a+(IT.campuses[c].years[y].td[k]||0),0);
+
+  /* ---- report scope: which campuses the KPIs + aggregate charts cover ---- */
+  let SCOPE = 'Beirut';   // default view
+  const scopeCamps = () => SCOPE==='all'    ? CAMPS
+                         : SCOPE==='exBekaa'? CAMPS.filter(c=>c!=='Bekaa')
+                         : [SCOPE];                       // a single campus name
+  const scopeLabel = () => SCOPE==='all'    ? 'all campuses'
+                         : SCOPE==='exBekaa'? 'all campuses except Bekaa'
+                         : SCOPE;
+  // sum a metric over an explicit campus list (defaults to the current scope)
+  const sumBy = (camps,sel,y,k)=>camps.reduce((a,c)=>a+(IT.campuses[c].years[y][sel][k]||0),0);
+  const sumTT = (y,k,camps=scopeCamps())=>sumBy(camps,'tt',y,k);
+  const sumTD = (y,k,camps=scopeCamps())=>sumBy(camps,'td',y,k);
   const pct = (n,d)=> d? +(n/d*100).toFixed(1) : 0;
 
   let built = false;
   function build(){
     if(built) return; built = true;
 
-    /* ---- header / KPIs ---- */
-    const asof = (IT.asof||'').replace('Till Today:','').trim();
-    document.getElementById('it_asof').textContent = asof;
-
-    const appCur = IT.allCampuses[CUR].app, appLast = IT.allCampuses[LAST].app;
-    document.getElementById('it_app').textContent = fmt(appCur);
-    const dpct = appLast? Math.round((appCur-appLast)/appLast*100):0;
-    document.getElementById('it_app_sub').innerHTML =
-      `<span class="${dpct>=0?'up':'flat'}">${dpct>=0?'+':''}${dpct}%</span> vs ${fmt(appLast)} same date last year`;
-    document.getElementById('it_reg').textContent = fmt(IT.allCampuses[CUR].reg);
-    document.getElementById('it_reg_sub').textContent = 'registrations open later in the cycle';
-    const reporting = CAMPS.filter(c=>(IT.campuses[c].years[CUR].td.app||0)>0).length;
-    document.getElementById('it_camp').textContent = reporting+' / '+CAMPS.length;
-    const lApp = sumTT(LAST,'app'), lReg = sumTT(LAST,'totreg');
-    document.getElementById('it_last').textContent = fmt(lApp);
-    document.getElementById('it_last_sub').innerHTML =
-      `applicants &middot; ${fmt(lReg)} registered (${pct(lReg,lApp)}%)`;
-
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
     Chart.defaults.color = '#46566c';
     const grid = {color:'#eef1f7'}, nogrid={display:false};
 
-    /* ---- 1) Applicants by campus: this year vs same date last year ---- */
+    /* ---- header ---- */
+    document.getElementById('it_asof').textContent = (IT.asof||'').replace('Till Today:','').trim();
+
+    /* ================= scope-independent charts (always every campus) ================= */
+
+    /* ---- A) Applicants by campus: this year vs same date last year ---- */
     new Chart(document.getElementById('itCampus'),{
       type:'bar',
       data:{labels:CAMPS,datasets:[
@@ -517,44 +528,7 @@ const IT_DATA = {"campuses":{"Beirut":{"asof":"Till Today: Wednesday 24th June 2
           tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.x)}`}}}}
     });
 
-    /* ---- 2) Applicants at this point in cycle, by year ---- */
-    new Chart(document.getElementById('itPace'),{
-      type:'bar',
-      data:{labels:CHRON.map(shortY),datasets:[
-        {label:'Applicants to date',data:CHRON.map(y=>IT.allCampuses[y].app),
-         backgroundColor:CHRON.map(y=>y===CUR?Cc.gold:Cc.navy),borderRadius:5,maxBarThickness:46}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,
-        scales:{y:{beginAtZero:true,grid:grid,title:{display:true,text:'Applicants (all campuses)'}},x:{grid:nogrid}},
-        plugins:{legend:{display:false},
-          tooltip:{callbacks:{title:i=>'Fall '+CHRON[i[0].dataIndex],
-            label:c=>` ${fmt(c.parsed.y)} applicants at this date`,
-            afterLabel:c=>{const y=CHRON[c.dataIndex];return ` ${fmt(IT.allCampuses[y].reg)} registered to date`;}}}}}
-    });
-
-    /* ---- 3) Full-semester volume + conversion, by year (completed cycles) ---- */
-    const done = CHRON.filter(y=>y!==CUR);
-    new Chart(document.getElementById('itFunnel'),{
-      data:{labels:done.map(shortY),datasets:[
-        {type:'bar',label:'Applicants (full semester)',data:done.map(y=>sumTT(y,'app')),
-         backgroundColor:Cc.blue,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
-        {type:'bar',label:'Total registered',data:done.map(y=>sumTT(y,'totreg')),
-         backgroundColor:Cc.teal,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
-        {type:'line',label:'Conversion %',data:done.map(y=>pct(sumTT(y,'totreg'),sumTT(y,'app'))),
-         borderColor:Cc.gold,backgroundColor:Cc.gold,borderWidth:3,tension:.25,pointRadius:3,yAxisID:'y1'}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        scales:{
-          y:{beginAtZero:true,position:'left',grid:grid,title:{display:true,text:'Students'}},
-          y1:{beginAtZero:true,max:120,position:'right',grid:nogrid,ticks:{callback:v=>v+'%'},title:{display:true,text:'Conversion'}},
-          x:{grid:nogrid}},
-        plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
-          tooltip:{callbacks:{title:i=>'Fall '+done[i[0].dataIndex],
-            label:c=>c.dataset.type==='line'?` Conversion: ${c.parsed.y}%`:` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}
-    });
-
-    /* ---- 4) Conversion % by campus, last completed semester ---- */
+    /* ---- B) Conversion % by campus, last completed semester ---- */
     const convRows = CAMPS.map(c=>[c,IT.campuses[c].years[LAST].tt.pct_reg2app||0]).sort((a,b)=>b[1]-a[1]);
     new Chart(document.getElementById('itConv'),{
       type:'bar',
@@ -567,42 +541,117 @@ const IT_DATA = {"campuses":{"Beirut":{"asof":"Till Today: Wednesday 24th June 2
           tooltip:{callbacks:{label:c=>` ${c.parsed.x}% registered`}}}}
     });
 
-    /* ---- 5) Applicant outcomes, Fall 25-26 (doughnut) ---- */
-    const oc = [['Registered',sumTT(LAST,'reg'),Cc.teal],
-                ['Still applicant',sumTT(LAST,'stillapp'),Cc.gold],
-                ['Unregistered',sumTT(LAST,'unreg'),Cc.slate],
-                ['Drop all',sumTT(LAST,'dropall'),'#dfe5ee']];
-    const ocTot = oc.reduce((a,b)=>a+b[1],0);
-    new Chart(document.getElementById('itOutcome'),{
-      type:'doughnut',
-      data:{labels:oc.map(o=>o[0]),datasets:[{data:oc.map(o=>o[1]),backgroundColor:oc.map(o=>o[2]),borderWidth:2,borderColor:'#fff'}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:12.5}}},
-          tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)} (${pct(c.parsed,ocTot)}%)`}}}}
-    });
+    /* ================= scope-driven KPIs + aggregate charts ================= */
+    const done = CHRON.filter(y=>y!==CUR);
+    let chPace, chFunnel, chOutcome, chMix;
 
-    /* ---- 6) Registered-student composition, Fall 25-26 ---- */
-    const mix=[['New regular',sumTT(LAST,'regular'),Cc.navy],
-               ['New transfer',sumTT(LAST,'transfer'),Cc.blue],
-               ['Continuing',sumTT(LAST,'cont'),Cc.gold]];
-    const mixTot=mix.reduce((a,b)=>a+b[1],0);
-    new Chart(document.getElementById('itMix'),{
-      type:'bar',
-      data:{labels:['Total registered'],datasets:mix.map(m=>({label:m[0],data:[m[1]],backgroundColor:m[2],borderRadius:4,maxBarThickness:60}))},
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        scales:{x:{stacked:true,beginAtZero:true,grid:grid},y:{stacked:true,grid:nogrid}},
-        plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
-          tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.x)} (${pct(c.parsed.x,mixTot)}%)`}}}}
-    });
+    function renderScoped(){
+      document.querySelectorAll('.scopeLabel').forEach(e=>e.textContent=scopeLabel());
+
+      /* KPIs */
+      const appCur = sumTD(CUR,'app'), appLast = sumTD(LAST,'app');
+      document.getElementById('it_app').textContent = fmt(appCur);
+      const dpct = appLast? Math.round((appCur-appLast)/appLast*100):0;
+      document.getElementById('it_app_sub').innerHTML =
+        `<span class="${dpct>=0?'up':'flat'}">${dpct>=0?'+':''}${dpct}%</span> vs ${fmt(appLast)} same date last year`;
+      document.getElementById('it_reg').textContent = fmt(sumTD(CUR,'reg'));
+      document.getElementById('it_reg_sub').textContent = 'registrations open later in the cycle';
+      const camps = scopeCamps();
+      const reporting = camps.filter(c=>(IT.campuses[c].years[CUR].td.app||0)>0).length;
+      document.getElementById('it_camp').textContent = reporting+' / '+camps.length;
+      const lApp = sumTT(LAST,'app'), lReg = sumTT(LAST,'totreg');
+      document.getElementById('it_last').textContent = fmt(lApp);
+      document.getElementById('it_last_sub').innerHTML =
+        `applicants &middot; ${fmt(lReg)} registered (${pct(lReg,lApp)}%)`;
+
+      /* 1) Applicants at this point in cycle, by year */
+      chPace && chPace.destroy();
+      chPace = new Chart(document.getElementById('itPace'),{
+        type:'bar',
+        data:{labels:CHRON.map(shortY),datasets:[
+          {label:'Applicants to date',data:CHRON.map(y=>sumTD(y,'app')),
+           backgroundColor:CHRON.map(y=>y===CUR?Cc.gold:Cc.navy),borderRadius:5,maxBarThickness:46}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          scales:{y:{beginAtZero:true,grid:grid,title:{display:true,text:'Applicants to date'}},x:{grid:nogrid}},
+          plugins:{legend:{display:false},
+            tooltip:{callbacks:{title:i=>'Fall '+CHRON[i[0].dataIndex],
+              label:c=>` ${fmt(c.parsed.y)} applicants at this date`,
+              afterLabel:c=>{const y=CHRON[c.dataIndex];return ` ${fmt(sumTD(y,'reg'))} registered to date`;}}}}}
+      });
+
+      /* 2) Full-semester volume + conversion, by year (completed cycles) */
+      chFunnel && chFunnel.destroy();
+      chFunnel = new Chart(document.getElementById('itFunnel'),{
+        data:{labels:done.map(shortY),datasets:[
+          {type:'bar',label:'Applicants (full semester)',data:done.map(y=>sumTT(y,'app')),
+           backgroundColor:Cc.blue,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
+          {type:'bar',label:'Total registered',data:done.map(y=>sumTT(y,'totreg')),
+           backgroundColor:Cc.teal,borderRadius:4,maxBarThickness:30,yAxisID:'y'},
+          {type:'line',label:'Conversion %',data:done.map(y=>pct(sumTT(y,'totreg'),sumTT(y,'app'))),
+           borderColor:Cc.gold,backgroundColor:Cc.gold,borderWidth:3,tension:.25,pointRadius:3,yAxisID:'y1'}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          scales:{
+            y:{beginAtZero:true,position:'left',grid:grid,title:{display:true,text:'Students'}},
+            y1:{beginAtZero:true,max:120,position:'right',grid:nogrid,ticks:{callback:v=>v+'%'},title:{display:true,text:'Conversion'}},
+            x:{grid:nogrid}},
+          plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
+            tooltip:{callbacks:{title:i=>'Fall '+done[i[0].dataIndex],
+              label:c=>c.dataset.type==='line'?` Conversion: ${c.parsed.y}%`:` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}
+      });
+
+      /* 3) Applicant outcomes, Fall 25-26 (doughnut) */
+      const oc = [['Registered',sumTT(LAST,'reg'),Cc.teal],
+                  ['Still applicant',sumTT(LAST,'stillapp'),Cc.gold],
+                  ['Unregistered',sumTT(LAST,'unreg'),Cc.slate],
+                  ['Drop all',sumTT(LAST,'dropall'),'#dfe5ee']];
+      const ocTot = oc.reduce((a,b)=>a+b[1],0);
+      chOutcome && chOutcome.destroy();
+      chOutcome = new Chart(document.getElementById('itOutcome'),{
+        type:'doughnut',
+        data:{labels:oc.map(o=>o[0]),datasets:[{data:oc.map(o=>o[1]),backgroundColor:oc.map(o=>o[2]),borderWidth:2,borderColor:'#fff'}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+          plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,font:{size:12.5}}},
+            tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)} (${pct(c.parsed,ocTot)}%)`}}}}
+      });
+
+      /* 4) Registered-student composition, Fall 25-26 */
+      const mix=[['New regular',sumTT(LAST,'regular'),Cc.navy],
+                 ['New transfer',sumTT(LAST,'transfer'),Cc.blue],
+                 ['Continuing',sumTT(LAST,'cont'),Cc.gold]];
+      const mixTot=mix.reduce((a,b)=>a+b[1],0);
+      chMix && chMix.destroy();
+      chMix = new Chart(document.getElementById('itMix'),{
+        type:'bar',
+        data:{labels:['Total registered'],datasets:mix.map(m=>({label:m[0],data:[m[1]],backgroundColor:m[2],borderRadius:4,maxBarThickness:60}))},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          scales:{x:{stacked:true,beginAtZero:true,grid:grid},y:{stacked:true,grid:nogrid}},
+          plugins:{legend:{position:'top',labels:{usePointStyle:true,boxWidth:8,font:{size:13}}},
+            tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.x)} (${pct(c.parsed.x,mixTot)}%)`}}}}
+      });
+    }
+    renderScoped();
+
+    /* ---- scope selector wiring ---- */
+    const selScope = document.getElementById('itScope');
+    const grpScope = document.getElementById('itScopeCampuses');
+    CAMPS.forEach(c=>grpScope.appendChild(new Option(c,c)));
+    selScope.value = SCOPE;     // Beirut by default
+    selScope.onchange = ()=>{ SCOPE = selScope.value; renderScoped(); };
 
     /* ---- detail table ---- */
     const selC=document.getElementById('selCampus'), selY=document.getElementById('selYear');
-    ['All Campuses',...CAMPS].forEach(c=>selC.add(new Option(c,c)));
+    ['All Campuses','All except Bekaa',...CAMPS].forEach(c=>selC.add(new Option(c,c)));
     YEARS.forEach(y=>selY.add(new Option('Fall '+y,y)));
     let mode='tt';
     function metrics(camp,y,m){
-      if(camp==='All Campuses'){
-        const s=k=> (m==='tt'?sumTT:sumTD)(y,k);
+      const list = camp==='All Campuses'    ? CAMPS
+                 : camp==='All except Bekaa'? CAMPS.filter(c=>c!=='Bekaa')
+                 : null;
+      if(list){
+        const s=k=> sumBy(list,m,y,k);
         const o={app:s('app'),reg:s('reg'),regular:s('regular'),transfer:s('transfer'),cont:s('cont'),
                  totreg:s('totreg'),unreg:s('unreg'),dropall:s('dropall'),stillapp:s('stillapp')};
         o.pct_app2stu=pct(o.app-o.stillapp,o.app); o.pct_reg2app=pct(o.reg,o.app); return o;
